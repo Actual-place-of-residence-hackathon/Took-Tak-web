@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  /* primary: 브랜드 옐로우 계열 (이름 미확정, 우선 primary로) */
+  --color-primary-50: #fffdf5;
+  --color-primary-100: #fffbe0;
+  --color-primary-200: #fff3b0;
+  --color-primary-300: #ffe873;
+  --color-primary-400: #ffd93d;
+  --color-primary-500: #f7c948;
+  --color-primary-600: #e0a800;
+  --color-primary-700: #b98300;
+  --color-primary-800: #946700;
+  --color-primary-900: #7a5400;
+
+  /* accent: 크림 계열 (이름 미확정, 우선 accent로) */
+  --color-accent-50: #fffefb;
+  --color-accent-100: #fffaf0;
+  --color-accent-200: #fef3dc;
+  --color-accent-300: #fce9bd;
+  --color-accent-400: #f8db8f;
+  --color-accent-500: #f0c563;
+  --color-accent-600: #d9a63f;
+  --color-accent-700: #b3822b;
+  --color-accent-800: #8c6522;
+  --color-accent-900: #70521d;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
