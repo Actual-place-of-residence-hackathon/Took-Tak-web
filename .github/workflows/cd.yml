@@ -1,0 +1,32 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy Frontend through Bastion
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+
+          script: |
+            ssh -o StrictHostKeyChecking=no -i ~/mybackend.pem ubuntu@10.28.1.150 << 'EOF'
+              cd ~/Took-Tak-web
+
+              git pull origin main
+
+              npm install
+
+              npm run build
+
+              pm2 restart tooktak-front
+            EOF  
