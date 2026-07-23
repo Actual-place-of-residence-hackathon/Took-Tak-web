@@ -2,19 +2,20 @@
 
 import { useSearchParams } from "next/navigation";
 import { ReportCreateForm } from "@/features/report-create";
-import type { BuildingId } from "@/shared/config/site-map";
 import { BackButton } from "@/shared/ui";
 
 export function ReportCreatePage() {
   const searchParams = useSearchParams();
-  const building = searchParams.get("building") as BuildingId | null;
-  const floor = searchParams.get("floor");
-  const x = searchParams.get("x");
-  const y = searchParams.get("y");
+  const buildingId = searchParams.get("buildingId");
+  const floorId = searchParams.get("floorId");
+  const zoneId = searchParams.get("zoneId");
+  const buildingName = searchParams.get("buildingName");
+  const floorName = searchParams.get("floorName");
+  const zoneName = searchParams.get("zoneName");
 
   const initialLocation =
-    building && floor && x && y
-      ? { buildingId: building, floor: Number(floor), x: Number(x), y: Number(y) }
+    buildingId && floorId && zoneId && buildingName && floorName && zoneName
+      ? { buildingId, floorId, zoneId, buildingName, floorName, zoneName }
       : undefined;
 
   return (

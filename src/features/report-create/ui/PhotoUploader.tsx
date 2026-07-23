@@ -11,11 +11,12 @@ interface PhotoUploaderProps {
   onChange: (photos: ReportPhoto[]) => void;
 }
 
-function fileToPhoto(file: File): ReportPhoto {
+function fileToPhoto(file: File, sortOrder: number): ReportPhoto {
   return {
     id: `${file.name}-${file.lastModified}-${Math.random()}`,
     url: URL.createObjectURL(file),
-    name: file.name,
+    kind: "report",
+    sortOrder,
   };
 }
 
@@ -26,7 +27,7 @@ export function PhotoUploader({ photos, onChange }: PhotoUploaderProps) {
     (files: File[]) => {
       const remaining = MAX_PHOTOS - photos.length;
       if (remaining <= 0) return;
-      const next = files.slice(0, remaining).map(fileToPhoto);
+      const next = files.slice(0, remaining).map((f, i) => fileToPhoto(f, photos.length + i));
       onChange([...photos, ...next]);
     },
     [photos, onChange],
@@ -97,7 +98,7 @@ export function PhotoUploader({ photos, onChange }: PhotoUploaderProps) {
               className="relative aspect-square overflow-hidden rounded-lg border border-zinc-200"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={photo.url} alt={photo.name} className="h-full w-full object-cover" />
+              <img src={photo.url} alt="첨부 사진" className="h-full w-full object-cover" />
               <button
                 type="button"
                 onClick={() => removePhoto(photo.id)}
