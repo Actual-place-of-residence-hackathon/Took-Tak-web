@@ -1,21 +1,20 @@
 "use client";
 
-import { toast } from "sonner";
-import { useReport, useSubmitSatisfaction } from "@/entities/report";
+import { useReport } from "@/entities/report";
 import { reportLocationLabel } from "@/shared/lib/report-location";
-import { BackButton, Button, Card, EmptyState, StatusBadge, UrgencyBadge } from "@/shared/ui";
-import type { ReportStatus } from "@/shared/types/report";
+import { BackButton, Card, EmptyState, StatusBadge, UrgencyBadge } from "@/shared/ui";
+import { REPORT_STATUS_LABELS, type ReportStatus } from "@/shared/types/report";
 
-const STEPS: ReportStatus[] = ["접수", "확인중", "처리중", "완료"];
+const STEPS: ReportStatus[] = ["received", "checking", "processing", "done"];
 
 export function ReportDetailPage({ reportId }: { reportId: string }) {
   const { data: report, isLoading } = useReport(reportId);
-  const submitSatisfaction = useSubmitSatisfaction();
 
   if (isLoading) return <EmptyState message="불러오는 중입니다..." />;
   if (!report) return <EmptyState message="신고 내역을 찾을 수 없습니다." />;
 
   const stepIndex = STEPS.indexOf(report.status);
+  const actionPhotos = report.photos.filter((p) => p.kind === "action");
 
   return (
     <main className="animate-tt-fade-in mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-8">
@@ -23,22 +22,23 @@ export function ReportDetailPage({ reportId }: { reportId: string }) {
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
           <StatusBadge status={report.status} />
-          <UrgencyBadge urgency={report.urgency} />
+          {report.urgency && <UrgencyBadge urgency={report.urgency} />}
         </div>
         <h1 className="text-xl font-semibold text-zinc-800">{reportLocationLabel(report)}</h1>
-        <p className="text-sm text-zinc-500">{report.category}</p>
+        <p className="text-sm text-zinc-500">{report.category ?? "분류 대기 중"}</p>
       </div>
 
       <Card>
         <h2 className="mb-3 font-semibold text-zinc-800">처리 타임라인</h2>
-        {report.status === "보류" ? (
+        {report.status === "hold" ? (
           <p className="text-sm text-rose-500">
-            보류됨 — {report.statusHistory.at(-1)?.note ?? "사유가 등록되지 않았습니다."}
+            보류됨 —{" "}
+            {report.statusHistory.at(-1)?.reason ?? "사유가 등록되지 않았습니다."}
           </p>
         ) : (
           <ol className="flex items-start">
             {STEPS.map((step, i) => {
-              const entry = report.statusHistory.find((h) => h.status === step);
+              const entry = report.statusHistory.find((h) => h.toStatus === step);
               const reached = i <= stepIndex;
               const lineToNextReached = i < stepIndex;
 
@@ -68,7 +68,7 @@ export function ReportDetailPage({ reportId }: { reportId: string }) {
                   <span
                     className={`mt-2 text-sm font-medium ${reached ? "text-zinc-800" : "text-zinc-400"}`}
                   >
-                    {step}
+                    {REPORT_STATUS_LABELS[step]}
                   </span>
                   {entry && (
                     <span className="mt-0.5 flex flex-col items-center text-xs text-zinc-400">
@@ -88,74 +88,49 @@ export function ReportDetailPage({ reportId }: { reportId: string }) {
         <p className="text-sm text-zinc-600">
           {report.aiReason || "분류 근거가 등록되지 않았습니다."}
         </p>
+        {report.aiSummary && <p className="mt-1 text-xs text-zinc-400">요약: {report.aiSummary}</p>}
       </Card>
 
       <Card>
         <h2 className="mb-2 font-semibold text-zinc-800">신고 내용</h2>
         <p className="text-sm whitespace-pre-line text-zinc-600">{report.description}</p>
-        {report.photos.length > 0 && (
+        {report.photos.filter((p) => p.kind === "report").length > 0 && (
           <div className="mt-3 grid grid-cols-3 gap-2">
-            {report.photos.map((photo) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                key={photo.id}
-                src={photo.url}
-                alt={photo.name}
-                className="aspect-square rounded-lg object-cover"
-              />
-            ))}
-          </div>
-        )}
-      </Card>
-
-      {report.status === "완료" && (
-        <Card>
-          <h2 className="mb-2 font-semibold text-zinc-800">조치 결과</h2>
-          <p className="text-sm text-zinc-600">
-            {report.actionNote ?? "등록된 조치 내용이 없습니다."}
-          </p>
-          {report.actionPhotos && report.actionPhotos.length > 0 && (
-            <div className="mt-3 grid grid-cols-3 gap-2">
-              {report.actionPhotos.map((photo) => (
+            {report.photos
+              .filter((p) => p.kind === "report")
+              .map((photo) => (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   key={photo.id}
                   src={photo.url}
-                  alt={photo.name}
+                  alt="신고 사진"
+                  className="aspect-square rounded-lg object-cover"
+                />
+              ))}
+          </div>
+        )}
+      </Card>
+
+      {report.status === "done" && report.actions.length > 0 && (
+        <Card>
+          <h2 className="mb-2 font-semibold text-zinc-800">조치 결과</h2>
+          {report.actions.map((action) => (
+            <p key={action.id} className="text-sm text-zinc-600">
+              {action.content}
+            </p>
+          ))}
+          {actionPhotos.length > 0 && (
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              {actionPhotos.map((photo) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={photo.id}
+                  src={photo.url}
+                  alt="조치 후 사진"
                   className="aspect-square rounded-lg object-cover"
                 />
               ))}
             </div>
-          )}
-
-          {report.satisfied === undefined ? (
-            <div className="mt-4 flex items-center gap-2">
-              <p className="flex-1 text-sm text-zinc-600">문제가 실제로 해결되었나요?</p>
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => {
-                  submitSatisfaction.mutate({ id: report.id, satisfied: true });
-                  toast.success("피드백 감사합니다.");
-                }}
-              >
-                예
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => {
-                  submitSatisfaction.mutate({ id: report.id, satisfied: false });
-                  toast.info("불편을 드려 죄송합니다. 담당자에게 다시 전달할게요.");
-                }}
-              >
-                아니요
-              </Button>
-            </div>
-          ) : (
-            <p className="mt-4 text-sm text-zinc-500">
-              만족도 응답: {report.satisfied ? "해결됨" : "미해결"}
-            </p>
           )}
         </Card>
       )}
