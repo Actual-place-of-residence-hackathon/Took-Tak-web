@@ -1,17 +1,22 @@
-import type { ReportStatus, ReportUrgency } from "@/shared/types/report";
+import {
+  REPORT_STATUS_LABELS,
+  REPORT_URGENCY_LABELS,
+  type ReportStatus,
+  type ReportUrgency,
+} from "@/shared/types/report";
 
 const statusClasses: Record<ReportStatus, string> = {
-  접수: "bg-zinc-100 text-zinc-600",
-  확인중: "bg-blue-100 text-blue-700",
-  처리중: "bg-amber-100 text-amber-700",
-  완료: "bg-emerald-100 text-emerald-700",
-  보류: "bg-rose-100 text-rose-700",
+  received: "bg-zinc-100 text-zinc-600",
+  checking: "bg-blue-100 text-blue-700",
+  processing: "bg-amber-100 text-amber-700",
+  done: "bg-emerald-100 text-emerald-700",
+  hold: "bg-rose-100 text-rose-700",
 };
 
 const urgencyClasses: Record<ReportUrgency, string> = {
-  상: "bg-rose-500 text-white",
-  중: "bg-amber-500 text-white",
-  하: "bg-emerald-500 text-white",
+  high: "bg-rose-500 text-white",
+  medium: "bg-amber-500 text-white",
+  low: "bg-emerald-500 text-white",
 };
 
 export function StatusBadge({ status }: { status: ReportStatus }) {
@@ -19,7 +24,7 @@ export function StatusBadge({ status }: { status: ReportStatus }) {
     <span
       className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${statusClasses[status]}`}
     >
-      {status}
+      {REPORT_STATUS_LABELS[status]}
     </span>
   );
 }
@@ -29,11 +34,11 @@ export function UrgencyBadge({ urgency }: { urgency: ReportUrgency }) {
     <span
       className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${urgencyClasses[urgency]}`}
     >
-      긴급도 {urgency}
+      긴급도 {REPORT_URGENCY_LABELS[urgency]}
     </span>
   );
 }
 
 export function urgencyDotColor(urgency: ReportUrgency): string {
-  return { 상: "bg-rose-500", 중: "bg-amber-500", 하: "bg-emerald-500" }[urgency];
+  return { high: "bg-rose-500", medium: "bg-amber-500", low: "bg-emerald-500" }[urgency];
 }
