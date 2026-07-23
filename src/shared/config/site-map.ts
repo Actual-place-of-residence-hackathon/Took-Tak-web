@@ -16,6 +16,8 @@ export function getBuilding(buildingId: string): Building | undefined {
   return BUILDINGS.find((b) => b.id === buildingId);
 }
 
+const FLOOR_PLAN_BASE_URL = "https://yeondon-s3.s3.us-east-1.amazonaws.com";
+
 export function floorImageSrc(buildingId: string, floor: number): string {
-  return `/floor-plans/${buildingId}-${floor}.png`;
+  return `${FLOOR_PLAN_BASE_URL}/${buildingId}-${floor}.png`;
 }
