@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/shared/ui";
+import { setAdminToken } from "@/shared/lib/backend-auth";
 
 export function AdminLoginPage() {
   const router = useRouter();
@@ -25,6 +26,11 @@ export function AdminLoginPage() {
       toast.error(body?.message ?? "비밀번호가 올바르지 않습니다.");
       return;
     }
+
+    // 페이지 접근 권한은 쿠키(서버가 세팅)가 담당하고, 실제 백엔드 API 호출에
+    // 쓰는 JWT 는 이 응답 바디로 받아 브라우저에 저장합니다.
+    const body = (await res.json()) as { backendToken: string };
+    setAdminToken(body.backendToken);
 
     toast.success("관리자로 인증되었습니다.");
     router.replace("/admin/dashboard");

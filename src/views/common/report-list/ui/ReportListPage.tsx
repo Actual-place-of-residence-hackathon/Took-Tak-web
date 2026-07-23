@@ -38,7 +38,7 @@ export function ReportListPage() {
                 <div className="flex flex-1 flex-col gap-1">
                   <div className="flex items-center gap-1.5">
                     <StatusBadge status={report.status} />
-                    <UrgencyBadge urgency={report.urgency} />
+                    {report.urgency && <UrgencyBadge urgency={report.urgency} />}
                   </div>
                   <p className="text-sm font-medium text-zinc-800">{reportLocationLabel(report)}</p>
                   <p className="line-clamp-1 text-xs text-zinc-500">{report.description}</p>

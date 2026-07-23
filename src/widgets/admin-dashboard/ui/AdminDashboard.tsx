@@ -12,9 +12,9 @@ import { SiteMap } from "@/widgets/site-map";
 function SummaryCounters({ reports }: { reports: Report[] }) {
   const today = new Date().toDateString();
   const todayCount = reports.filter((r) => new Date(r.createdAt).toDateString() === today).length;
-  const urgentCount = reports.filter((r) => r.urgency === "상" && r.status !== "완료").length;
-  const inProgressCount = reports.filter((r) => r.status === "처리중").length;
-  const doneCount = reports.filter((r) => r.status === "완료").length;
+  const urgentCount = reports.filter((r) => r.urgency === "high" && r.status !== "done").length;
+  const inProgressCount = reports.filter((r) => r.status === "processing").length;
+  const doneCount = reports.filter((r) => r.status === "done").length;
 
   const items = [
     { label: "오늘 접수", value: todayCount },
@@ -102,7 +102,7 @@ function ReportListItem({ report }: { report: Report }) {
     <Card className={`border-l-4 hover:border-zinc-300 ${reportBorderClass(report)}`}>
       <div className="mb-1 flex items-center gap-1.5">
         <StatusBadge status={report.status} />
-        <UrgencyBadge urgency={report.urgency} />
+        {report.urgency && <UrgencyBadge urgency={report.urgency} />}
       </div>
       <p className="text-sm font-medium text-zinc-800">{reportLocationLabel(report)}</p>
       <p className="line-clamp-1 text-xs text-zinc-500">{report.description}</p>

@@ -9,18 +9,29 @@ import {
   useSubmitAction,
   useUpdateReportStatus,
 } from "@/entities/report";
-import { REPORT_CATEGORIES, type Report, type ReportStatus } from "@/shared/types/report";
+import {
+  REPORT_CATEGORIES,
+  REPORT_STATUS_LABELS,
+  REPORT_URGENCY_LABELS,
+  type Report,
+  type ReportCategory,
+  type ReportStatus,
+  type ReportUrgency,
+} from "@/shared/types/report";
 import { reportLocationLabel } from "@/shared/lib/report-location";
 import { Button, Dropdown, StatusBadge, Textarea, UrgencyBadge } from "@/shared/ui";
 
-const STATUS_OPTIONS: ReportStatus[] = ["접수", "확인중", "처리중", "완료", "보류"];
+const STATUS_OPTIONS: ReportStatus[] = ["received", "checking", "processing", "done", "hold"];
 const CATEGORY_DROPDOWN_OPTIONS = REPORT_CATEGORIES.map((c) => ({ value: c, label: c }));
-const URGENCY_DROPDOWN_OPTIONS = [
-  { value: "상", label: "상" },
-  { value: "중", label: "중" },
-  { value: "하", label: "하" },
+const URGENCY_DROPDOWN_OPTIONS: { value: ReportUrgency; label: string }[] = [
+  { value: "high", label: REPORT_URGENCY_LABELS.high },
+  { value: "medium", label: REPORT_URGENCY_LABELS.medium },
+  { value: "low", label: REPORT_URGENCY_LABELS.low },
 ];
-const STATUS_DROPDOWN_OPTIONS = STATUS_OPTIONS.map((s) => ({ value: s, label: s }));
+const STATUS_DROPDOWN_OPTIONS = STATUS_OPTIONS.map((s) => ({
+  value: s,
+  label: REPORT_STATUS_LABELS[s],
+}));
 
 export function ReportStatusPanel({ report }: { report: Report }) {
   const overrideClassification = useOverrideClassification();
@@ -28,20 +39,18 @@ export function ReportStatusPanel({ report }: { report: Report }) {
   const submitAction = useSubmitAction();
   const mergeReports = useMergeReports();
 
+  // 같은 구역(zone)의 다른 미완료 신고를 유사 신고 후보로 봅니다.
+  // (C2/A4 도 zone_id 단위로 중복을 판정합니다)
   const { data: allReports = [] } = useReports();
   const similarReports = allReports.filter(
-    (r) =>
-      r.buildingId === report.buildingId &&
-      r.floor === report.floor &&
-      r.id !== report.id &&
-      r.status !== "완료",
+    (r) => r.zoneId === report.zoneId && r.id !== report.id && r.status !== "done",
   );
 
-  const [category, setCategory] = useState(report.category);
-  const [urgency, setUrgency] = useState(report.urgency);
+  const [category, setCategory] = useState<ReportCategory>(report.category ?? "기타");
+  const [urgency, setUrgency] = useState<ReportUrgency>(report.urgency ?? "medium");
   const [nextStatus, setNextStatus] = useState<ReportStatus>(report.status);
   const [note, setNote] = useState("");
-  const [actionNote, setActionNote] = useState(report.actionNote ?? "");
+  const [actionContent, setActionContent] = useState("");
   const [selectedMergeIds, setSelectedMergeIds] = useState<string[]>([]);
 
   return (
@@ -49,7 +58,7 @@ export function ReportStatusPanel({ report }: { report: Report }) {
       <section>
         <div className="mb-2 flex items-center gap-2">
           <StatusBadge status={report.status} />
-          <UrgencyBadge urgency={report.urgency} />
+          {report.urgency && <UrgencyBadge urgency={report.urgency} />}
         </div>
         <p className="font-medium text-zinc-800">{reportLocationLabel(report)}</p>
         <p className="mt-1 text-sm whitespace-pre-line text-zinc-600">{report.description}</p>
@@ -66,7 +75,9 @@ export function ReportStatusPanel({ report }: { report: Report }) {
             ))}
           </div>
         )}
-        <p className="mt-2 text-xs text-zinc-400">AI 분류 근거: {report.aiReason}</p>
+        {report.aiReason && (
+          <p className="mt-2 text-xs text-zinc-400">AI 분류 근거: {report.aiReason}</p>
+        )}
       </section>
 
       <section className="flex flex-col gap-2 border-t border-zinc-200 pt-4">
@@ -75,12 +86,12 @@ export function ReportStatusPanel({ report }: { report: Report }) {
           <Dropdown
             value={category}
             options={CATEGORY_DROPDOWN_OPTIONS}
-            onChange={(v) => setCategory(v as Report["category"])}
+            onChange={(v) => setCategory(v as ReportCategory)}
           />
           <Dropdown
             value={urgency}
             options={URGENCY_DROPDOWN_OPTIONS}
-            onChange={(v) => setUrgency(v as Report["urgency"])}
+            onChange={(v) => setUrgency(v as ReportUrgency)}
           />
         </div>
         <Button
@@ -98,7 +109,7 @@ export function ReportStatusPanel({ report }: { report: Report }) {
       {similarReports.length > 0 && (
         <section className="flex flex-col gap-2 border-t border-zinc-200 pt-4">
           <h3 className="text-sm font-semibold text-zinc-700">
-            같은 층의 다른 신고 ({similarReports.length}건)
+            같은 구역의 다른 신고 ({similarReports.length}건)
           </h3>
           <div className="flex flex-col gap-1">
             {similarReports.map((r) => (
@@ -112,7 +123,7 @@ export function ReportStatusPanel({ report }: { report: Report }) {
                     )
                   }
                 />
-                {r.description.slice(0, 30)}
+                {(r.description ?? "").slice(0, 30)}
               </label>
             ))}
           </div>
@@ -121,7 +132,7 @@ export function ReportStatusPanel({ report }: { report: Report }) {
             variant="secondary"
             disabled={selectedMergeIds.length === 0}
             onClick={() => {
-              mergeReports.mutate({ primaryId: report.id, mergeIds: selectedMergeIds });
+              mergeReports.mutate({ reportIds: [report.id, ...selectedMergeIds] });
               setSelectedMergeIds([]);
               toast.success("유사 신고를 병합했습니다.");
             }}
@@ -145,24 +156,24 @@ export function ReportStatusPanel({ report }: { report: Report }) {
           className="min-h-16"
         />
 
-        {nextStatus === "완료" && (
+        {nextStatus === "done" && (
           <Textarea
             label="조치 내용 (필수)"
             placeholder="어떻게 조치했는지 입력해주세요."
-            value={actionNote}
-            onChange={(e) => setActionNote(e.target.value)}
+            value={actionContent}
+            onChange={(e) => setActionContent(e.target.value)}
           />
         )}
 
         <Button
           size="sm"
           onClick={() => {
-            if (nextStatus === "완료") {
-              if (!actionNote.trim()) {
+            if (nextStatus === "done") {
+              if (!actionContent.trim()) {
                 toast.error("조치 내용을 입력해주세요.");
                 return;
               }
-              submitAction.mutate({ id: report.id, actionNote, actionPhotos: report.actionPhotos });
+              submitAction.mutate({ id: report.id, content: actionContent });
               toast.success("완료 처리되었습니다.");
               return;
             }

@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { useReports } from "@/entities/report";
 import type { Report } from "@/shared/types/report";
+import { reportLocationLabel } from "@/shared/lib/report-location";
 import { BackButton, Card } from "@/shared/ui";
 import { SiteMap } from "@/widgets/site-map";
 
@@ -32,15 +33,15 @@ export function StatisticsPage() {
 
   const stats = useMemo(() => {
     const total = reports.length;
-    const done = reports.filter((r) => r.status === "완료").length;
+    const done = reports.filter((r) => r.status === "done").length;
     const doneRate = total === 0 ? 0 : Math.round((done / total) * 100);
 
     const doneDurationsMs = reports
-      .filter((r) => r.status === "완료")
+      .filter((r) => r.status === "done")
       .map((r) => {
         const created = new Date(r.createdAt).getTime();
         const completed = new Date(
-          r.statusHistory.find((h) => h.status === "완료")?.changedAt ?? r.createdAt,
+          r.statusHistory.find((h) => h.toStatus === "done")?.changedAt ?? r.createdAt,
         ).getTime();
         return completed - created;
       });
@@ -54,20 +55,23 @@ export function StatisticsPage() {
               10,
           ) / 10;
 
-    const byCategory = groupCount(reports, (r) => r.category);
+    const byCategory = groupCount(reports, (r) => r.category ?? "미분류");
     const byBuilding = groupCount(reports, (r) => r.buildingName);
-    const byLocation = groupCount(reports, (r) => `${r.buildingName} ${r.floor}F`);
+    const byLocation = groupCount(reports, (r) => reportLocationLabel(r));
 
-    const floorMap = new Map<
+    // zone 은 고정 좌표라 같은 zone 의 신고는 항상 같은 pinX/pinY 를 가집니다.
+    // (여러 건이어도 평균 = 그 zone 좌표 그대로)
+    const zoneMap = new Map<
       string,
-      { buildingId: string; floor: number; totalX: number; totalY: number; count: number }
+      { buildingId: string; floorId: string; zoneId: string; totalX: number; totalY: number; count: number }
     >();
 
     for (const report of reports) {
-      const key = `${report.buildingId}-${report.floor}`;
-      const current = floorMap.get(key) ?? {
+      if (report.pinX === null || report.pinY === null) continue;
+      const current = zoneMap.get(report.zoneId) ?? {
         buildingId: report.buildingId,
-        floor: report.floor,
+        floorId: report.floorId,
+        zoneId: report.zoneId,
         totalX: 0,
         totalY: 0,
         count: 0,
@@ -75,14 +79,15 @@ export function StatisticsPage() {
       current.count += 1;
       current.totalX += report.pinX;
       current.totalY += report.pinY;
-      floorMap.set(key, current);
+      zoneMap.set(report.zoneId, current);
     }
 
-    const hotspotMarkers = [...floorMap.values()]
+    const hotspotMarkers = [...zoneMap.values()]
       .filter((entry) => entry.count >= 3)
       .map((entry) => ({
+        zoneId: entry.zoneId,
         buildingId: entry.buildingId,
-        floor: entry.floor,
+        floorId: entry.floorId,
         count: entry.count,
         pinX: Math.round(entry.totalX / entry.count),
         pinY: Math.round(entry.totalY / entry.count),
@@ -151,7 +156,7 @@ export function StatisticsPage() {
         <div className="mb-4 flex flex-col gap-2">
           <h2 className="font-semibold text-zinc-800">배치도에서 다발 구역 보기</h2>
           <p className="text-sm text-zinc-500">
-            동일 건물·층에서 신고가 3건 이상인 구역에 느낌표 아이콘으로 표시합니다.
+            동일 구역에서 신고가 3건 이상이면 느낌표 아이콘으로 표시합니다.
           </p>
         </div>
         {stats.hotspotMarkers.length === 0 ? (

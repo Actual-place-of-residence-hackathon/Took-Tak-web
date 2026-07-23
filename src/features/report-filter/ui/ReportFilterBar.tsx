@@ -1,7 +1,12 @@
 "use client";
 
-import { BUILDINGS } from "@/shared/config/site-map";
-import { REPORT_CATEGORIES, type ReportFilter } from "@/shared/types/report";
+import { useLocationTree } from "@/shared/lib/use-location-tree";
+import {
+  REPORT_CATEGORIES,
+  REPORT_STATUS_LABELS,
+  REPORT_URGENCY_LABELS,
+  type ReportFilter,
+} from "@/shared/types/report";
 import { Dropdown } from "@/shared/ui";
 
 const SORT_OPTIONS = [
@@ -12,11 +17,10 @@ const SORT_OPTIONS = [
 
 const STATUS_OPTIONS = [
   { value: "", label: "전체 상태" },
-  { value: "접수", label: "접수" },
-  { value: "확인중", label: "확인중" },
-  { value: "처리중", label: "처리중" },
-  { value: "완료", label: "완료" },
-  { value: "보류", label: "보류" },
+  ...(Object.entries(REPORT_STATUS_LABELS) as [string, string][]).map(([value, label]) => ({
+    value,
+    label,
+  })),
 ];
 
 const CATEGORY_OPTIONS = [
@@ -26,14 +30,10 @@ const CATEGORY_OPTIONS = [
 
 const URGENCY_OPTIONS = [
   { value: "", label: "전체 긴급도" },
-  { value: "상", label: "상" },
-  { value: "중", label: "중" },
-  { value: "하", label: "하" },
-];
-
-const BUILDING_OPTIONS = [
-  { value: "", label: "전체 건물" },
-  ...BUILDINGS.map((b) => ({ value: b.id, label: b.name })),
+  ...(Object.entries(REPORT_URGENCY_LABELS) as [string, string][]).map(([value, label]) => ({
+    value,
+    label,
+  })),
 ];
 
 export function ReportFilterBar({
@@ -43,6 +43,12 @@ export function ReportFilterBar({
   filter: ReportFilter;
   onChange: (filter: ReportFilter) => void;
 }) {
+  const { data: buildings = [] } = useLocationTree();
+  const buildingOptions = [
+    { value: "", label: "전체 건물" },
+    ...buildings.map((b) => ({ value: b.id, label: b.name })),
+  ];
+
   return (
     <div className="flex flex-wrap gap-2">
       <Dropdown
@@ -78,7 +84,7 @@ export function ReportFilterBar({
       <Dropdown
         ariaLabel="건물"
         value={filter.buildingId ?? ""}
-        options={BUILDING_OPTIONS}
+        options={buildingOptions}
         onChange={(value) => onChange({ ...filter, buildingId: value || undefined })}
       />
     </div>

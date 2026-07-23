@@ -1,7 +1,13 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { CreateReportInput, Report, ReportFilter, ReportStatus } from "@/shared/types/report";
+import type {
+  CreateReportInput,
+  ReportCategory,
+  ReportFilter,
+  ReportStatus,
+  ReportUrgency,
+} from "@/shared/types/report";
 import * as reportApi from "@/entities/report/api/report-api";
 
 const reportsKey = (filter: ReportFilter = {}) => ["reports", filter] as const;
@@ -60,8 +66,8 @@ export function useOverrideClassification() {
       urgency,
     }: {
       id: string;
-      category: Report["category"];
-      urgency: Report["urgency"];
+      category: ReportCategory;
+      urgency: ReportUrgency;
     }) => reportApi.overrideClassification(id, category, urgency),
     onSuccess: (report) => {
       invalidate();
@@ -76,13 +82,13 @@ export function useSubmitAction() {
   return useMutation({
     mutationFn: ({
       id,
-      actionNote,
-      actionPhotos,
+      content,
+      photoUrls,
     }: {
       id: string;
-      actionNote: string;
-      actionPhotos: Report["actionPhotos"];
-    }) => reportApi.submitAction(id, actionNote, actionPhotos),
+      content: string;
+      photoUrls?: string[];
+    }) => reportApi.submitAction(id, content, photoUrls),
     onSuccess: (report) => {
       invalidate();
       if (report) queryClient.invalidateQueries({ queryKey: reportKey(report.id) });
@@ -90,26 +96,14 @@ export function useSubmitAction() {
   });
 }
 
-export function useSubmitSatisfaction() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, satisfied }: { id: string; satisfied: boolean }) =>
-      reportApi.submitSatisfaction(id, satisfied),
-    onSuccess: (report) => {
-      if (report) queryClient.invalidateQueries({ queryKey: reportKey(report.id) });
-    },
-  });
-}
+// ※ 만족도(satisfaction) 기능은 백엔드에 대응 엔드포인트가 없어 제거했습니다.
+// export function useSubmitSatisfaction ... (삭제됨)
 
 export function useMergeReports() {
-  const queryClient = useQueryClient();
   const invalidate = useInvalidateReports();
   return useMutation({
-    mutationFn: ({ primaryId, mergeIds }: { primaryId: string; mergeIds: string[] }) =>
-      reportApi.mergeReports(primaryId, mergeIds),
-    onSuccess: (report) => {
-      invalidate();
-      if (report) queryClient.invalidateQueries({ queryKey: reportKey(report.id) });
-    },
+    mutationFn: ({ reportIds, note }: { reportIds: string[]; note?: string }) =>
+      reportApi.mergeReports(reportIds, note),
+    onSuccess: invalidate,
   });
 }
