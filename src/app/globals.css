@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
+  --background: #fffdf9;
   --foreground: #171717;
 }
 
@@ -11,40 +11,123 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 
-  /* primary: 브랜드 옐로우 계열 (이름 미확정, 우선 primary로) */
-  --color-primary-50: #fffdf5;
-  --color-primary-100: #fffbe0;
-  --color-primary-200: #fff3b0;
-  --color-primary-300: #ffe873;
-  --color-primary-400: #ffd93d;
-  --color-primary-500: #f7c948;
-  --color-primary-600: #e0a800;
-  --color-primary-700: #b98300;
-  --color-primary-800: #946700;
-  --color-primary-900: #7a5400;
+  /* primary: 배치도 헤더/외곽선의 라벤더 블루 계열 */
+  --color-primary-50: #f5f6fc;
+  --color-primary-100: #e9ecf8;
+  --color-primary-200: #cfd6ef;
+  --color-primary-300: #adbbe3;
+  --color-primary-400: #8a9dd5;
+  --color-primary-500: #7288c8;
+  --color-primary-600: #5c70ac;
+  --color-primary-700: #4a5b8c;
+  --color-primary-800: #3b4970;
+  --color-primary-900: #2f3a59;
 
-  /* accent: 크림 계열 (이름 미확정, 우선 accent로) */
-  --color-accent-50: #fffefb;
-  --color-accent-100: #fffaf0;
-  --color-accent-200: #fef3dc;
-  --color-accent-300: #fce9bd;
-  --color-accent-400: #f8db8f;
-  --color-accent-500: #f0c563;
-  --color-accent-600: #d9a63f;
-  --color-accent-700: #b3822b;
-  --color-accent-800: #8c6522;
-  --color-accent-900: #70521d;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* accent: 배치도 카드/배경의 아이보리 크림 계열 */
+  --color-accent-50: #fffdf9;
+  --color-accent-100: #fef9f0;
+  --color-accent-200: #fbf1de;
+  --color-accent-300: #f5e4c2;
+  --color-accent-400: #ecd39c;
+  --color-accent-500: #ddbd79;
+  --color-accent-600: #c1a15c;
+  --color-accent-700: #997e47;
+  --color-accent-800: #78623a;
+  --color-accent-900: #614f30;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+@keyframes tt-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes tt-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes tt-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes tt-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes tt-slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes tt-pin-drop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.3);
+  }
+  60% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.animate-tt-fade-in {
+  animation: tt-fade-in 0.4s ease-out both;
+}
+
+.animate-tt-fade {
+  animation: tt-fade 0.15s ease-out both;
+}
+
+.animate-tt-scale-in {
+  animation: tt-scale-in 0.18s ease-out both;
+}
+
+.animate-tt-slide-down {
+  animation: tt-slide-down 0.18s ease-out both;
+  transform-origin: top;
+}
+
+.animate-tt-slide-in-right {
+  animation: tt-slide-in-right 0.28s cubic-bezier(0.32, 0.72, 0.35, 1) both;
+}
+
+.animate-tt-pin-drop {
+  animation: tt-pin-drop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
