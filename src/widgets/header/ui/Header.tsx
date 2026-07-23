@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/shared/ui";
+import { clearAdminToken } from "@/shared/lib/backend-auth";
 
 const studentLinks = [
   { href: "/", label: "배치도" },
@@ -26,6 +27,7 @@ export function Header() {
 
   async function handleAdminLogout() {
     await fetch("/api/admin/logout", { method: "POST" });
+    clearAdminToken();
     toast.success("관리자 세션을 종료했습니다.");
     router.push("/admin/login");
     router.refresh();

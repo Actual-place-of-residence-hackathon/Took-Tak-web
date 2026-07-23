@@ -5,12 +5,25 @@ import {
   createAdminSessionToken,
   verifyPasscode,
 } from "@/shared/lib/admin-auth";
+import { issueBackendAdminToken } from "@/shared/lib/backend-admin";
 
 export async function POST(request: Request) {
   const { passcode } = (await request.json()) as { passcode?: string };
 
   if (!passcode || !verifyPasscode(passcode)) {
     return NextResponse.json({ message: "비밀번호가 올바르지 않습니다." }, { status: 401 });
+  }
+
+  // 프론트 패스코드 게이트는 통과했지만, 실제 백엔드 API(상태변경/조치등록/
+  // 통계 등)를 호출하려면 백엔드가 발급한 JWT 가 별도로 필요합니다.
+  // 여기서 실패하면 쿠키를 세팅하지 않고 바로 에러를 반환합니다 — 조용히
+  // 넘어가면 이후 모든 관리자 API 호출이 401 로 실패하는데 원인을 알기 어렵습니다.
+  let backendToken: string;
+  try {
+    backendToken = await issueBackendAdminToken();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "백엔드 인증에 실패했습니다.";
+    return NextResponse.json({ message }, { status: 502 });
   }
 
   const cookieStore = await cookies();
@@ -22,5 +35,5 @@ export async function POST(request: Request) {
     maxAge: 60 * 60 * 24 * 7,
   });
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, backendToken });
 }
