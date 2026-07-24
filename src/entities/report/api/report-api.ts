@@ -244,6 +244,7 @@ export async function createReport(input: CreateReportInput): Promise<Report> {
       ...(input.pinX !== undefined ? { pin_x: input.pinX } : {}),
       ...(input.pinY !== undefined ? { pin_y: input.pinY } : {}),
       part: input.part,
+      urgency: input.urgency,
       description: input.description,
       photoUrls: input.photoUrls ?? [],
     }),

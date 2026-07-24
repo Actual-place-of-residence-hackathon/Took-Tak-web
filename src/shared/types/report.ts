@@ -84,9 +84,8 @@ export interface Report {
   updatedAt: string;
 }
 
-// 신고 등록 시 보내는 값. category/urgency/aiReason 은 여기 없습니다 —
-// 서버(Bedrock)가 등록 직후 직접 생성하며, 클라이언트가 보낸 값은 전부
-// 무시됩니다(기능명세 16-10: 클라이언트 입력을 신뢰하지 않음).
+// 신고 등록 시 보내는 값. category/aiReason 은 여기 없습니다 — 서버(Bedrock)가
+// 등록 직후 직접 생성합니다. urgency 는 학생이 직접 선택해서 보냅니다.
 export interface CreateReportInput {
   buildingId: string;
   floorId: string;
@@ -96,6 +95,7 @@ export interface CreateReportInput {
   pinX?: number;
   pinY?: number;
   part?: string;
+  urgency: ReportUrgency;
   description: string;
   photoUrls?: string[];
 }

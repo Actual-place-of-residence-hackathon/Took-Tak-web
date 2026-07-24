@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useCreateReport } from "@/entities/report";
 import { useLocationTree } from "@/shared/lib/use-location-tree";
-import type { ReportPhoto } from "@/shared/types/report";
+import { REPORT_URGENCY_LABELS, type ReportPhoto, type ReportUrgency } from "@/shared/types/report";
 import { Button, Card, Textarea } from "@/shared/ui";
 import { SiteMap } from "@/widgets/site-map";
 import { reportCreateSchema, type ReportCreateFormValues } from "../model/schema";
@@ -47,6 +47,7 @@ export function ReportCreateForm({
       floorId: initialLocation?.floorId ?? "",
       pinX: initialLocation?.pinX ?? undefined,
       pinY: initialLocation?.pinY ?? undefined,
+      urgency: undefined,
       description: "",
     },
   });
@@ -55,6 +56,7 @@ export function ReportCreateForm({
   const floorId = watch("floorId");
   const pinX = watch("pinX");
   const pinY = watch("pinY");
+  const urgency = watch("urgency");
   const hasLocation = pinX !== undefined && pinY !== undefined;
 
   // 선택된 위치의 이름은 initialLocation(고정 prop)이 아니라 현재 폼 값으로부터
@@ -80,6 +82,7 @@ export function ReportCreateForm({
       pinX: values.pinX,
       pinY: values.pinY,
       part: values.part,
+      urgency: values.urgency,
       description: values.description,
       photoUrls: photos.map((p) => p.url),
     });
@@ -125,6 +128,34 @@ export function ReportCreateForm({
             placeholder="예: 천장, 창문, 콘센트"
           />
         </label>
+      </Card>
+
+      <Card>
+        <span className="text-sm font-medium text-zinc-700">긴급도</span>
+        <div className="mt-2 flex gap-2">
+          {(Object.keys(REPORT_URGENCY_LABELS) as ReportUrgency[]).map((value) => {
+            const active = urgency === value;
+            const activeClass =
+              value === "high"
+                ? "bg-red-600 text-white"
+                : value === "medium"
+                  ? "bg-orange-500 text-white"
+                  : "bg-yellow-400 text-zinc-900";
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setValue("urgency", value, { shouldValidate: true })}
+                className={`flex-1 rounded-lg py-2 text-sm font-medium transition-colors ${
+                  active ? activeClass : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+                }`}
+              >
+                {REPORT_URGENCY_LABELS[value]}
+              </button>
+            );
+          })}
+        </div>
+        {errors.urgency && <p className="mt-1 text-xs text-rose-500">{errors.urgency.message}</p>}
       </Card>
 
       <Card>
