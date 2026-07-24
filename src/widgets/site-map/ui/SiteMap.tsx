@@ -22,9 +22,10 @@ interface HotspotMarker {
 interface SiteMapProps {
   mode?: SiteMapMode;
   onPinClick?: (report: Report) => void;
-  // 학생은 배치도의 zone 핀 중 하나를 탭해서 신고 위치로 선택합니다
-  // (임의 좌표를 찍지 않습니다 — 팀 결정 2026-07-24).
+  // 등록된 zone 핀을 탭하면 이 콜백으로 그 zone 이 선택됩니다.
   onSelectZone?: (buildingId: string, floorId: string, zoneId: string) => void;
+  // 그 외의 자리를 클릭하면 자유 좌표로 선택됩니다.
+  onSelectPin?: (buildingId: string, floorId: string, pinX: number, pinY: number) => void;
   selectedZoneId?: string | null;
   urgencyFilter?: ReportUrgency;
   rightControls?: ReactNode;
@@ -36,6 +37,7 @@ export function SiteMap({
   mode = "browse",
   onPinClick,
   onSelectZone,
+  onSelectPin,
   selectedZoneId,
   urgencyFilter,
   rightControls,
@@ -97,6 +99,9 @@ export function SiteMap({
         onSelectZone={
           onSelectZone ? (zoneId) => onSelectZone(building.id, floor.id, zoneId) : undefined
         }
+        onSelectPin={
+          onSelectPin ? (pinX, pinY) => onSelectPin(building.id, floor.id, pinX, pinY) : undefined
+        }
         selectedZoneId={selectedZoneId}
         hotspots={visibleHotspots}
         hidePins={hidePins}
@@ -104,7 +109,7 @@ export function SiteMap({
 
       {mode === "place" && (
         <p className="-mt-2 text-center text-xs text-zinc-400">
-          배치도의 구역 핀을 눌러 신고 위치를 선택해주세요.
+          배치도에서 신고 위치를 눌러 선택해주세요.
         </p>
       )}
     </div>

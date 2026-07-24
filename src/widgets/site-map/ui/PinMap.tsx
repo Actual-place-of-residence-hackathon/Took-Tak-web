@@ -17,13 +17,14 @@ interface HotspotMarker {
 interface PinMapProps {
   buildingName: string;
   floorName: string;
-  // mode === "place" 일 때 선택 가능한 zone 목록(고정 좌표). 학생은 이 중
-  // 하나를 탭해서 신고 위치로 선택합니다 — 임의 좌표를 찍지 않습니다.
+  // mode === "place" 일 때, 등록된 zone 핀을 탭하면 그 zone 이 선택됩니다.
+  // 그 외의 자리를 클릭하면 자유 좌표(pinX/pinY)로 선택됩니다.
   zones: SiteMapZone[];
   reports: Report[];
   mode: SiteMapMode;
   onPinClick?: (report: Report) => void;
   onSelectZone?: (zoneId: string) => void;
+  onSelectPin?: (pinX: number, pinY: number) => void;
   selectedZoneId?: string | null;
   hotspots?: HotspotMarker[];
   hidePins?: boolean;
@@ -67,16 +68,16 @@ export function PinMap({
   mode,
   onPinClick,
   onSelectZone,
+  onSelectPin,
   selectedZoneId,
   hotspots,
   hidePins,
 }: PinMapProps) {
   const showZonePicker = mode === "place";
 
-  // 백엔드는 zone_id 만 저장할 수 있어(임의 좌표 컬럼 없음) 실제로 신고에
-  // 붙는 위치는 여전히 정해진 zone 중 하나입니다. 다만 사용자 입장에선 누른
-  // 그 자리에 핀이 딱 찍혀야 하니, 클릭 좌표에 핀을 그대로 그려주고(시각적)
-  // 그 좌표에서 가장 가까운 zone 을 내부적으로 선택합니다(실제 저장값).
+  // 클릭한 자리에 그대로 핀을 찍습니다. 등록된 zone 핀을 직접 탭하면 그
+  // zone 이 선택되고(고정 좌표), 그 외의 자리를 클릭하면 자유 좌표로
+  // 선택됩니다(백엔드 reports.pin_x/pin_y, zone_id nullable).
   const [draftPin, setDraftPin] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
@@ -84,30 +85,14 @@ export function PinMap({
   }, [buildingName, floorName]);
 
   function handleImageAreaClick(e: React.MouseEvent<HTMLDivElement>) {
-    if (!showZonePicker || !onSelectZone) return;
-
-    const withCoords = zones.filter(
-      (z): z is typeof z & { pinX: number; pinY: number } => z.pinX !== null && z.pinY !== null,
-    );
-    if (withCoords.length === 0) return;
+    if (!showZonePicker || !onSelectPin) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
 
-    let nearest = withCoords[0];
-    let nearestDistSq = Infinity;
-    for (const zone of withCoords) {
-      const dx = zone.pinX - x;
-      const dy = zone.pinY - y;
-      const distSq = dx * dx + dy * dy;
-      if (distSq < nearestDistSq) {
-        nearestDistSq = distSq;
-        nearest = zone;
-      }
-    }
     setDraftPin({ x, y });
-    onSelectZone(nearest.id);
+    onSelectPin(x, y);
   }
 
   return (
