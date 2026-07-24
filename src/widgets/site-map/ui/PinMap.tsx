@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import type { Report } from "@/shared/types/report";
 import { reportLocationLabel } from "@/shared/lib/report-location";
 import { floorImageSrc } from "@/shared/config/site-map";
@@ -82,39 +82,8 @@ export function PinMap({
     setDraftPin(null);
   }
 
-  const imgRef = useRef<HTMLImageElement>(null);
-
-  // 이미지의 투명/흰 여백 영역(실제 도면 밖)을 클릭했는지 픽셀 단위로 확인합니다.
-  // S3 CORS 설정 등으로 캔버스 픽셀을 읽을 수 없는 경우엔 안전하게 클릭을 허용합니다.
-  function isBackgroundPixel(clientX: number, clientY: number): boolean {
-    const img = imgRef.current;
-    if (!img || !img.complete || img.naturalWidth === 0) return false;
-
-    const rect = img.getBoundingClientRect();
-    const scaleX = img.naturalWidth / rect.width;
-    const scaleY = img.naturalHeight / rect.height;
-    const px = Math.floor((clientX - rect.left) * scaleX);
-    const py = Math.floor((clientY - rect.top) * scaleY);
-
-    try {
-      const canvas = document.createElement("canvas");
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return false;
-      ctx.drawImage(img, 0, 0);
-      const [r, g, b, a] = ctx.getImageData(px, py, 1, 1).data;
-      const isTransparent = a < 16;
-      const isNearWhite = r > 245 && g > 245 && b > 245;
-      return isTransparent || isNearWhite;
-    } catch {
-      return false;
-    }
-  }
-
   function handleImageAreaClick(e: React.MouseEvent<HTMLDivElement>) {
     if (!showZonePicker || !onSelectPin) return;
-    if (isBackgroundPixel(e.clientX, e.clientY)) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
@@ -131,12 +100,10 @@ export function PinMap({
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        ref={imgRef}
         src={floorImageSrc(buildingName, floorName)}
         alt={`${buildingName} ${floorName} 배치도`}
         className="pointer-events-none block h-auto w-full select-none"
         draggable={false}
-        crossOrigin="anonymous"
       />
 
       {hotspots?.map((hotspot) => (
