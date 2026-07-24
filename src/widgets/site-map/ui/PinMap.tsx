@@ -27,9 +27,9 @@ interface PinMapProps {
 }
 
 const PIN_BG_CLASSES = {
-  high: "bg-rose-600",
-  medium: "bg-amber-500",
-  low: "bg-emerald-500",
+  high: "bg-red-600",
+  medium: "bg-orange-500",
+  low: "bg-yellow-400",
   done: "bg-emerald-500",
   neutral: "bg-zinc-400",
 } as const;
