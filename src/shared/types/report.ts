@@ -58,8 +58,8 @@ export interface Report {
   buildingName: string;
   floorId: string;
   floorName: string;
-  zoneId: string;
-  zoneName: string;
+  zoneId: string | null;
+  zoneName: string | null;
   pinX: number | null;
   pinY: number | null;
   part: string | null;
@@ -90,7 +90,11 @@ export interface Report {
 export interface CreateReportInput {
   buildingId: string;
   floorId: string;
-  zoneId: string;
+  // zoneId 는 관리자가 등록해둔 고정 구역을 선택했을 때만 있습니다.
+  // 자유 클릭으로 신고한 경우 zoneId 는 없고 pinX/pinY 만 있습니다.
+  zoneId?: string;
+  pinX?: number;
+  pinY?: number;
   part?: string;
   description: string;
   photoUrls?: string[];

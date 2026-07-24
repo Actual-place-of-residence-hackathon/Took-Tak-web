@@ -73,8 +73,8 @@ interface WireReportListItem {
   building: string;
   floor_id: string;
   floor: string;
-  zone_id: string;
-  zone: string;
+  zone_id: string | null;
+  zone: string | null;
   pin_x: string | number | null;
   pin_y: string | number | null;
   reporter_id: string;
@@ -88,7 +88,10 @@ interface WireReportDetail {
   reporter_id: string;
   building_id: string;
   floor_id: string;
-  zone_id: string;
+  zone_id: string | null;
+  // 자유 클릭 신고는 zone 이 없고 이 좌표를 직접 씁니다.
+  pin_x: string | number | null;
+  pin_y: string | number | null;
   part: string | null;
   description: string | null;
   status: ReportStatus;
@@ -104,7 +107,7 @@ interface WireReportDetail {
   updated_at: string;
   building: { id: string; name: string };
   floor: { id: string; name: string };
-  zone: WireZone;
+  zone: WireZone | null;
   reporter: { id: string; name: string };
   photos: WirePhoto[];
   actions: WireAction[];
@@ -174,10 +177,11 @@ function mapDetail(detail: WireReportDetail, statusHistory: WireStatusHistoryEnt
     buildingName: detail.building.name,
     floorId: detail.floor.id,
     floorName: detail.floor.name,
-    zoneId: detail.zone.id,
-    zoneName: detail.zone.name,
-    pinX: toPinCoord(detail.zone.pin_x),
-    pinY: toPinCoord(detail.zone.pin_y),
+    zoneId: detail.zone?.id ?? null,
+    zoneName: detail.zone?.name ?? null,
+    // zone 이 있으면 zone 의 고정 좌표, 없으면(자유 클릭) 신고 자체의 좌표를 씁니다.
+    pinX: toPinCoord(detail.zone?.pin_x ?? detail.pin_x),
+    pinY: toPinCoord(detail.zone?.pin_y ?? detail.pin_y),
     part: detail.part,
     description: detail.description,
     status: detail.status,
@@ -236,7 +240,9 @@ export async function createReport(input: CreateReportInput): Promise<Report> {
     body: JSON.stringify({
       building_id: input.buildingId,
       floor_id: input.floorId,
-      zone_id: input.zoneId,
+      zone_id: input.zoneId ?? null,
+      pin_x: input.pinX ?? null,
+      pin_y: input.pinY ?? null,
       part: input.part,
       description: input.description,
       photoUrls: input.photoUrls ?? [],
