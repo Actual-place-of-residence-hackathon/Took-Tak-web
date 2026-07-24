@@ -126,8 +126,7 @@ export function PinMap({
         </div>
       )}
 
-      {!showZonePicker &&
-        !hidePins &&
+      {!hidePins &&
         reports.map((report) => {
           if (report.pinX === null || report.pinY === null) return null;
           return (
