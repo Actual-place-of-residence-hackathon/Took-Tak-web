@@ -11,9 +11,8 @@ import { ReportCreateForm } from "@/features/report-create";
 interface PendingLocation {
   buildingId: string;
   floorId: string;
-  zoneId?: string;
-  pinX?: number;
-  pinY?: number;
+  pinX: number;
+  pinY: number;
 }
 
 type UrgencyOption = ReportUrgency | "전체";
@@ -59,10 +58,6 @@ export function HomePage() {
   const [pendingLocation, setPendingLocation] = useState<PendingLocation | null>(null);
   const [urgency, setUrgency] = useState<UrgencyOption>("전체");
 
-  function handleSelectZone(buildingId: string, floorId: string, zoneId: string) {
-    setPendingLocation({ buildingId, floorId, zoneId });
-  }
-
   function handleSelectPin(buildingId: string, floorId: string, pinX: number, pinY: number) {
     setPendingLocation({ buildingId, floorId, pinX, pinY });
   }
@@ -73,17 +68,14 @@ export function HomePage() {
 
   const building = buildings?.find((b) => b.id === pendingLocation?.buildingId);
   const floor = building?.floors.find((f) => f.id === pendingLocation?.floorId);
-  const zone = floor?.zones.find((z) => z.id === pendingLocation?.zoneId);
 
   const initialLocation =
-    pendingLocation && building && floor && (zone || pendingLocation.pinX !== undefined)
+    pendingLocation && building && floor
       ? {
           buildingId: building.id,
           floorId: floor.id,
           buildingName: building.name,
           floorName: floor.name,
-          zoneId: zone?.id,
-          zoneName: zone?.name,
           pinX: pendingLocation.pinX,
           pinY: pendingLocation.pinY,
         }
@@ -102,9 +94,7 @@ export function HomePage() {
 
       <SiteMap
         mode="place"
-        onSelectZone={handleSelectZone}
         onSelectPin={handleSelectPin}
-        selectedZoneId={pendingLocation?.zoneId ?? null}
         onPinClick={(report) => router.push(`/report/${report.id}`)}
         urgencyFilter={urgency === "전체" ? undefined : urgency}
         rightControls={<UrgencyFilter value={urgency} onChange={setUrgency} />}

@@ -4,7 +4,6 @@ import { useState } from "react";
 import type { Report } from "@/shared/types/report";
 import { reportLocationLabel } from "@/shared/lib/report-location";
 import { floorImageSrc } from "@/shared/config/site-map";
-import type { SiteMapZone } from "../model/types";
 import type { SiteMapMode } from "../model/types";
 
 interface HotspotMarker {
@@ -17,15 +16,12 @@ interface HotspotMarker {
 interface PinMapProps {
   buildingName: string;
   floorName: string;
-  // mode === "place" 일 때, 등록된 zone 핀을 탭하면 그 zone 이 선택됩니다.
-  // 그 외의 자리를 클릭하면 자유 좌표(pinX/pinY)로 선택됩니다.
-  zones: SiteMapZone[];
+  // mode === "place" 일 때, 배치도 위 클릭한 자리가 그대로 자유 좌표(pinX/pinY)로
+  // 선택됩니다.
   reports: Report[];
   mode: SiteMapMode;
   onPinClick?: (report: Report) => void;
-  onSelectZone?: (zoneId: string) => void;
   onSelectPin?: (pinX: number, pinY: number) => void;
-  selectedZoneId?: string | null;
   hotspots?: HotspotMarker[];
   hidePins?: boolean;
 }
@@ -63,21 +59,16 @@ function Hotspot({ count }: { count: number }) {
 export function PinMap({
   buildingName,
   floorName,
-  zones,
   reports,
   mode,
   onPinClick,
-  onSelectZone,
   onSelectPin,
-  selectedZoneId,
   hotspots,
   hidePins,
 }: PinMapProps) {
   const showZonePicker = mode === "place";
 
-  // 클릭한 자리에 그대로 핀을 찍습니다. 등록된 zone 핀을 직접 탭하면 그
-  // zone 이 선택되고(고정 좌표), 그 외의 자리를 클릭하면 자유 좌표로
-  // 선택됩니다(백엔드 reports.pin_x/pin_y, zone_id nullable).
+  // 클릭한 자리에 그대로 핀을 찍습니다(백엔드 reports.pin_x/pin_y, zone_id nullable).
   const [draftPin, setDraftPin] = useState<{ x: number; y: number } | null>(null);
 
   // 층/건물이 바뀌면 이전 화면에 찍었던 draft pin은 더 이상 의미가 없으니
@@ -125,32 +116,7 @@ export function PinMap({
         </div>
       ))}
 
-      {showZonePicker &&
-        zones
-          .filter((zone) => zone.pinX !== null && zone.pinY !== null)
-          .map((zone) => {
-            const selected = zone.id === selectedZoneId;
-            return (
-              <button
-                key={zone.id}
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setDraftPin({ x: zone.pinX as number, y: zone.pinY as number });
-                  onSelectZone?.(zone.id);
-                }}
-                className="animate-tt-pin-drop group absolute -translate-x-1/2 -translate-y-1/2"
-                style={{ left: `${zone.pinX}%`, top: `${zone.pinY}%` }}
-              >
-                <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 w-max -translate-x-1/2 rounded-lg bg-zinc-900 px-2.5 py-1.5 text-xs whitespace-nowrap text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
-                  {zone.name}
-                </span>
-                <Pin colorClassName={selected ? "bg-primary-600" : "bg-zinc-400"} size={14} />
-              </button>
-            );
-          })}
-
-      {/* 사용자가 실제로 누른 위치(또는 선택한 zone)에 찍히는 핀. */}
+      {/* 사용자가 실제로 누른 위치에 찍히는 핀. */}
       {showZonePicker && draftPin && (
         <div
           className="animate-tt-pin-drop pointer-events-none absolute -translate-x-1/2 -translate-y-1/2"

@@ -18,8 +18,6 @@ interface InitialLocation {
   floorId: string;
   buildingName: string;
   floorName: string;
-  zoneId?: string;
-  zoneName?: string;
   pinX?: number;
   pinY?: number;
 }
@@ -47,7 +45,6 @@ export function ReportCreateForm({
     defaultValues: {
       buildingId: initialLocation?.buildingId ?? "",
       floorId: initialLocation?.floorId ?? "",
-      zoneId: initialLocation?.zoneId ?? undefined,
       pinX: initialLocation?.pinX ?? undefined,
       pinY: initialLocation?.pinY ?? undefined,
       description: "",
@@ -56,31 +53,20 @@ export function ReportCreateForm({
 
   const buildingId = watch("buildingId");
   const floorId = watch("floorId");
-  const zoneId = watch("zoneId");
   const pinX = watch("pinX");
   const pinY = watch("pinY");
-  const hasLocation = Boolean(zoneId) || (pinX !== undefined && pinY !== undefined);
+  const hasLocation = pinX !== undefined && pinY !== undefined;
 
   // 선택된 위치의 이름은 initialLocation(고정 prop)이 아니라 현재 폼 값으로부터
-  // 매번 다시 구합니다 — 사용자가 아래 지도에서 다른 구역을 다시 고르면
-  // buildingId/floorId/zoneId 만 바뀌고 initialLocation 은 그대로라, prop 값을
-  // 그대로 표시하면 실제 선택과 화면 표시가 어긋납니다.
+  // 매번 다시 구합니다 — 사용자가 아래 지도에서 다른 자리를 다시 누르면
+  // buildingId/floorId 만 바뀌고 initialLocation 은 그대로라, prop 값을 그대로
+  // 표시하면 실제 선택과 화면 표시가 어긋납니다.
   const selectedBuilding = buildings?.find((b) => b.id === buildingId);
   const selectedFloor = selectedBuilding?.floors.find((f) => f.id === floorId);
-  const selectedZone = selectedFloor?.zones.find((z) => z.id === zoneId);
-
-  function handleSelectZone(buildingId: string, floorId: string, selectedZoneId: string) {
-    setValue("buildingId", buildingId);
-    setValue("floorId", floorId);
-    setValue("zoneId", selectedZoneId);
-    setValue("pinX", undefined);
-    setValue("pinY", undefined);
-  }
 
   function handleSelectPin(buildingId: string, floorId: string, pinX: number, pinY: number) {
     setValue("buildingId", buildingId);
     setValue("floorId", floorId);
-    setValue("zoneId", undefined);
     setValue("pinX", pinX);
     setValue("pinY", pinY);
   }
@@ -91,7 +77,6 @@ export function ReportCreateForm({
     const report = await createReport.mutateAsync({
       buildingId: values.buildingId,
       floorId: values.floorId,
-      zoneId: values.zoneId,
       pinX: values.pinX,
       pinY: values.pinY,
       part: values.part,
@@ -114,20 +99,14 @@ export function ReportCreateForm({
         {hasLocation ? (
           <p className="mt-2 text-zinc-600">
             {selectedBuilding?.name ?? initialLocation?.buildingName} ·{" "}
-            {selectedFloor?.name ?? initialLocation?.floorName} ·{" "}
-            {selectedZone?.name ?? initialLocation?.zoneName ?? "직접 선택한 위치"}
+            {selectedFloor?.name ?? initialLocation?.floorName} · 직접 선택한 위치
           </p>
         ) : (
           <p className="mt-2 text-sm text-zinc-400">배치도에서 신고 위치를 눌러 선택해주세요.</p>
         )}
-        {errors.zoneId && <p className="mt-1 text-xs text-rose-500">{errors.zoneId.message}</p>}
+        {errors.pinX && <p className="mt-1 text-xs text-rose-500">{errors.pinX.message}</p>}
         <div className="mt-4">
-          <SiteMap
-            mode="place"
-            onSelectZone={handleSelectZone}
-            onSelectPin={handleSelectPin}
-            selectedZoneId={zoneId || null}
-          />
+          <SiteMap mode="place" onSelectPin={handleSelectPin} />
         </div>
       </Card>
 

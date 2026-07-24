@@ -22,11 +22,8 @@ interface HotspotMarker {
 interface SiteMapProps {
   mode?: SiteMapMode;
   onPinClick?: (report: Report) => void;
-  // 등록된 zone 핀을 탭하면 이 콜백으로 그 zone 이 선택됩니다.
-  onSelectZone?: (buildingId: string, floorId: string, zoneId: string) => void;
-  // 그 외의 자리를 클릭하면 자유 좌표로 선택됩니다.
+  // 배치도의 클릭한 자리가 자유 좌표로 선택됩니다.
   onSelectPin?: (buildingId: string, floorId: string, pinX: number, pinY: number) => void;
-  selectedZoneId?: string | null;
   urgencyFilter?: ReportUrgency;
   rightControls?: ReactNode;
   hotspots?: HotspotMarker[];
@@ -36,9 +33,7 @@ interface SiteMapProps {
 export function SiteMap({
   mode = "browse",
   onPinClick,
-  onSelectZone,
   onSelectPin,
-  selectedZoneId,
   urgencyFilter,
   rightControls,
   hotspots,
@@ -75,7 +70,9 @@ export function SiteMap({
   }
 
   if (isError || !buildings || buildings.length === 0 || !building || !floor) {
-    return <p className="py-12 text-center text-sm text-zinc-400">배치도 정보를 불러오지 못했습니다.</p>;
+    return (
+      <p className="py-12 text-center text-sm text-zinc-400">배치도 정보를 불러오지 못했습니다.</p>
+    );
   }
 
   return (
@@ -92,17 +89,12 @@ export function SiteMap({
       <PinMap
         buildingName={building.name}
         floorName={floor.name}
-        zones={floor.zones}
         reports={reports}
         mode={mode}
         onPinClick={onPinClick}
-        onSelectZone={
-          onSelectZone ? (zoneId) => onSelectZone(building.id, floor.id, zoneId) : undefined
-        }
         onSelectPin={
           onSelectPin ? (pinX, pinY) => onSelectPin(building.id, floor.id, pinX, pinY) : undefined
         }
-        selectedZoneId={selectedZoneId}
         hotspots={visibleHotspots}
         hidePins={hidePins}
       />
