@@ -240,9 +240,9 @@ export async function createReport(input: CreateReportInput): Promise<Report> {
     body: JSON.stringify({
       building_id: input.buildingId,
       floor_id: input.floorId,
-      zone_id: input.zoneId ?? null,
-      pin_x: input.pinX ?? null,
-      pin_y: input.pinY ?? null,
+      ...(input.zoneId !== undefined ? { zone_id: input.zoneId } : {}),
+      ...(input.pinX !== undefined ? { pin_x: input.pinX } : {}),
+      ...(input.pinY !== undefined ? { pin_y: input.pinY } : {}),
       part: input.part,
       description: input.description,
       photoUrls: input.photoUrls ?? [],
