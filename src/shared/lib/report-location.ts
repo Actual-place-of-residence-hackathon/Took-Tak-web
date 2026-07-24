@@ -1,7 +1,7 @@
 import type { Report } from "@/shared/types/report";
 
 export function reportLocationLabel(report: Report): string {
-  return `${report.buildingName} ${report.floorName} ${report.zoneName}`;
+  return `${report.buildingName} ${report.floorName} ${report.zoneName ?? "직접 선택한 위치"}`;
 }
 
 const URGENCY_BORDER_CLASSES = {

@@ -49,7 +49,11 @@ export function ReportStatusPanel({
   // (C2/A4 도 zone_id 단위로 중복을 판정합니다)
   const { data: allReports = [] } = useReports();
   const similarReports = allReports.filter(
-    (r) => r.zoneId === report.zoneId && r.id !== report.id && r.status !== "done",
+    (r) =>
+      report.zoneId !== null &&
+      r.zoneId === report.zoneId &&
+      r.id !== report.id &&
+      r.status !== "done",
   );
 
   const [category, setCategory] = useState<ReportCategory>(report.category ?? "기타");
@@ -103,9 +107,14 @@ export function ReportStatusPanel({
         <Button
           size="sm"
           variant="secondary"
-          onClick={() => {
-            overrideClassification.mutate({ id: report.id, category, urgency });
-            toast.success("분류를 수정했습니다.");
+          disabled={overrideClassification.isPending}
+          onClick={async () => {
+            try {
+              await overrideClassification.mutateAsync({ id: report.id, category, urgency });
+              toast.success("분류를 수정했습니다.");
+            } catch {
+              toast.error("분류 수정에 실패했습니다.");
+            }
           }}
         >
           분류 저장
@@ -136,11 +145,15 @@ export function ReportStatusPanel({
           <Button
             size="sm"
             variant="secondary"
-            disabled={selectedMergeIds.length === 0}
-            onClick={() => {
-              mergeReports.mutate({ reportIds: [report.id, ...selectedMergeIds] });
-              setSelectedMergeIds([]);
-              toast.success("유사 신고를 병합했습니다.");
+            disabled={selectedMergeIds.length === 0 || mergeReports.isPending}
+            onClick={async () => {
+              try {
+                await mergeReports.mutateAsync({ reportIds: [report.id, ...selectedMergeIds] });
+                setSelectedMergeIds([]);
+                toast.success("유사 신고를 병합했습니다.");
+              } catch {
+                toast.error("신고 병합에 실패했습니다.");
+              }
             }}
           >
             선택한 신고 병합
@@ -173,20 +186,33 @@ export function ReportStatusPanel({
 
         <Button
           size="sm"
-          onClick={() => {
+          disabled={submitAction.isPending || updateStatus.isPending}
+          onClick={async () => {
             if (nextStatus === "done") {
               if (!actionContent.trim()) {
                 toast.error("조치 내용을 입력해주세요.");
                 return;
               }
-              submitAction.mutate({ id: report.id, content: actionContent });
-              toast.success("완료 처리되었습니다.");
-              onStatusChanged?.();
+              try {
+                await submitAction.mutateAsync({ id: report.id, content: actionContent });
+                toast.success("완료 처리되었습니다.");
+                onStatusChanged?.();
+              } catch {
+                toast.error("완료 처리에 실패했습니다.");
+              }
               return;
             }
-            updateStatus.mutate({ id: report.id, status: nextStatus, note: note || undefined });
-            toast.success("상태를 변경했습니다.");
-            onStatusChanged?.();
+            try {
+              await updateStatus.mutateAsync({
+                id: report.id,
+                status: nextStatus,
+                note: note || undefined,
+              });
+              toast.success("상태를 변경했습니다.");
+              onStatusChanged?.();
+            } catch {
+              toast.error("상태 변경에 실패했습니다.");
+            }
           }}
         >
           상태 변경 적용
