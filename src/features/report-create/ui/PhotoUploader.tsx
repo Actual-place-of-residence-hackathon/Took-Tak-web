@@ -1,7 +1,9 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
+import { toast } from "sonner";
+import { uploadReportImages } from "@/entities/report/api/report-api";
 import type { ReportPhoto } from "@/shared/types/report";
 
 const MAX_PHOTOS = 3;
@@ -11,24 +13,36 @@ interface PhotoUploaderProps {
   onChange: (photos: ReportPhoto[]) => void;
 }
 
-function fileToPhoto(file: File, sortOrder: number): ReportPhoto {
-  return {
-    id: `${file.name}-${file.lastModified}-${Math.random()}`,
-    url: URL.createObjectURL(file),
-    kind: "report",
-    sortOrder,
-  };
-}
-
 export function PhotoUploader({ photos, onChange }: PhotoUploaderProps) {
-  const disabled = photos.length >= MAX_PHOTOS;
+  const [uploading, setUploading] = useState(false);
+  const disabled = photos.length >= MAX_PHOTOS || uploading;
 
+  // 신고 사진은 blob URL(브라우저 로컬 임시 참조)이 아니라, 백엔드가 실제로
+  // 저장한 파일의 URL이어야 새로고침·다른 화면·다른 기기에서도 보입니다.
+  // 그래서 선택 즉시 미리보기를 만들지 않고, 업로드가 끝나 서버 URL을
+  // 받은 뒤에만 목록에 추가합니다.
   const addFiles = useCallback(
-    (files: File[]) => {
+    async (files: File[]) => {
       const remaining = MAX_PHOTOS - photos.length;
       if (remaining <= 0) return;
-      const next = files.slice(0, remaining).map((f, i) => fileToPhoto(f, photos.length + i));
-      onChange([...photos, ...next]);
+      const toUpload = files.slice(0, remaining);
+      if (toUpload.length === 0) return;
+
+      setUploading(true);
+      try {
+        const urls = await uploadReportImages(toUpload);
+        const next: ReportPhoto[] = urls.map((url, i) => ({
+          id: `${url}-${photos.length + i}`,
+          url,
+          kind: "report",
+          sortOrder: photos.length + i,
+        }));
+        onChange([...photos, ...next]);
+      } catch {
+        toast.error("사진 업로드에 실패했습니다.");
+      } finally {
+        setUploading(false);
+      }
     },
     [photos, onChange],
   );
@@ -56,7 +70,9 @@ export function PhotoUploader({ photos, onChange }: PhotoUploaderProps) {
       >
         <input {...getInputProps()} />
         <span className="text-zinc-500">
-          사진을 끌어놓으세요 (최대 {MAX_PHOTOS}장), 또는 아래 버튼으로 선택하세요
+          {uploading
+            ? "업로드 중..."
+            : `사진을 끌어놓으세요 (최대 ${MAX_PHOTOS}장), 또는 아래 버튼으로 선택하세요`}
         </span>
         <div className="flex gap-2">
           <label className="bg-primary-500 hover:bg-primary-600 cursor-pointer rounded-md px-3 py-1.5 text-xs font-medium text-white">

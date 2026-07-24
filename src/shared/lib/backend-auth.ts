@@ -111,11 +111,15 @@ const DEFAULT_HEADERS = {
 export async function authenticatedFetch(url: string, options: RequestInit = {}): Promise<Response> {
   async function attempt(): Promise<Response> {
     const token = await getAuthToken();
+    // FormData(멀티파트 업로드) 요청은 Content-Type을 강제로 붙이면 안 됩니다 —
+    // 브라우저가 파일 경계(boundary)까지 포함해 직접 설정해야 하는데, 여기서
+    // "application/json"으로 덮어쓰면 백엔드(multer)가 파싱하지 못합니다.
+    const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
     return fetch(url, {
       credentials: "same-origin",
       ...options,
       headers: {
-        ...DEFAULT_HEADERS,
+        ...(isFormData ? {} : DEFAULT_HEADERS),
         ...(options.headers ?? {}),
         Authorization: `Bearer ${token}`,
       },

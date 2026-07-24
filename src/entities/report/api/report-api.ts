@@ -248,6 +248,20 @@ export async function createReport(input: CreateReportInput): Promise<Report> {
   return report;
 }
 
+// 신고 사진은 blob URL이 아니라 백엔드가 실제로 저장한 파일의 URL을 써야
+// 새로고침/다른 화면/다른 기기에서도 보입니다. 신고 생성 전에 먼저 파일을
+// 업로드하고, 그 응답 URL을 createReport 의 photoUrls 로 전달하세요.
+export async function uploadReportImages(files: File[]): Promise<string[]> {
+  const formData = new FormData();
+  files.forEach((file) => formData.append("images", file));
+
+  const body = await request<{ photoUrls: string[] }>(`/api/reports/upload-images`, {
+    method: "POST",
+    body: formData,
+  });
+  return body.photoUrls;
+}
+
 export async function updateReportStatus(
   id: string,
   status: ReportStatus,
