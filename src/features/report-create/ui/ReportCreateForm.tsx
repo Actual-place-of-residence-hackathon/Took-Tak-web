@@ -57,6 +57,7 @@ export function ReportCreateForm({
   const pinX = watch("pinX");
   const pinY = watch("pinY");
   const urgency = watch("urgency");
+  const description = watch("description");
   const hasLocation = pinX !== undefined && pinY !== undefined;
 
   // 선택된 위치의 이름은 initialLocation(고정 prop)이 아니라 현재 폼 값으로부터
@@ -164,6 +165,7 @@ export function ReportCreateForm({
           maxLength={500}
           placeholder="어떤 문제인지 자세히 알려주세요."
           {...register("description")}
+          value={description ?? ""}
         />
         {errors.description && (
           <p className="mt-1 text-xs text-rose-500">{errors.description.message}</p>
