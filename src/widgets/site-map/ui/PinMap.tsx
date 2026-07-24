@@ -29,7 +29,6 @@ const PIN_BG_CLASSES = {
   high: "bg-red-600",
   medium: "bg-orange-500",
   low: "bg-yellow-400",
-  done: "bg-emerald-500",
   neutral: "bg-zinc-400",
 } as const;
 
@@ -139,16 +138,12 @@ export function PinMap({
               className="animate-tt-pin-drop group absolute -translate-x-1/2 -translate-y-1/2 hover:z-10"
               style={{ left: `${report.pinX}%`, top: `${report.pinY}%` }}
             >
-              <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 w-max max-w-56 -translate-x-1/2 rounded-lg bg-zinc-900 px-2.5 py-1.5 text-xs whitespace-nowrap text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
-                {report.category ?? "분류 대기"}
+              <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 w-max max-w-56 -translate-x-1/2 truncate rounded-lg bg-zinc-900 px-2.5 py-1.5 text-xs text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
+                {report.description}
               </span>
               <Pin
                 colorClassName={
-                  report.status === "done"
-                    ? PIN_BG_CLASSES.done
-                    : report.urgency
-                      ? PIN_BG_CLASSES[report.urgency]
-                      : PIN_BG_CLASSES.neutral
+                  report.urgency ? PIN_BG_CLASSES[report.urgency] : PIN_BG_CLASSES.neutral
                 }
               />
             </button>
