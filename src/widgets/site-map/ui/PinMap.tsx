@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { Report } from "@/shared/types/report";
 import { reportLocationLabel } from "@/shared/lib/report-location";
 import { floorImageSrc } from "@/shared/config/site-map";
@@ -80,9 +80,16 @@ export function PinMap({
   // 선택됩니다(백엔드 reports.pin_x/pin_y, zone_id nullable).
   const [draftPin, setDraftPin] = useState<{ x: number; y: number } | null>(null);
 
-  useEffect(() => {
+  // 층/건물이 바뀌면 이전 화면에 찍었던 draft pin은 더 이상 의미가 없으니
+  // 지워야 합니다. useEffect 로 하면 커밋 후 한 번 더 렌더링이 도는데,
+  // React가 권장하는 "렌더링 중 상태 조정" 패턴을 쓰면 그 추가 렌더링 없이
+  // 같은 커밋에서 바로 처리됩니다.
+  const locationKey = `${buildingName}::${floorName}`;
+  const [prevLocationKey, setPrevLocationKey] = useState(locationKey);
+  if (locationKey !== prevLocationKey) {
+    setPrevLocationKey(locationKey);
     setDraftPin(null);
-  }, [buildingName, floorName]);
+  }
 
   function handleImageAreaClick(e: React.MouseEvent<HTMLDivElement>) {
     if (!showZonePicker || !onSelectPin) return;
@@ -143,9 +150,7 @@ export function PinMap({
             );
           })}
 
-      {/* 사용자가 실제로 누른 위치에 그대로 찍히는 핀. 저장되는 값은 위에서
-          내부적으로 고른 가장 가까운 zone 이지만, 시각적으로는 클릭한 자리에
-          핀이 나와야 하니 그 좌표를 그대로 씁니다. */}
+      {/* 사용자가 실제로 누른 위치(또는 선택한 zone)에 찍히는 핀. */}
       {showZonePicker && draftPin && (
         <div
           className="animate-tt-pin-drop pointer-events-none absolute -translate-x-1/2 -translate-y-1/2"
