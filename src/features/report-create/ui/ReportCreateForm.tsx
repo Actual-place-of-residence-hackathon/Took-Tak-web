@@ -110,7 +110,7 @@ export function ReportCreateForm({
         )}
         {errors.pinX && <p className="mt-1 text-xs text-rose-500">{errors.pinX.message}</p>}
         <div className="mt-4">
-          <SiteMap mode="place" onSelectPin={handleSelectPin} />
+          <SiteMap mode="place" onSelectPin={handleSelectPin} draftUrgency={urgency} />
         </div>
       </Card>
 

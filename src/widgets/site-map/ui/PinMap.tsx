@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { Report } from "@/shared/types/report";
+import type { Report, ReportUrgency } from "@/shared/types/report";
 import { floorImageSrc } from "@/shared/config/site-map";
 import type { SiteMapMode } from "../model/types";
 
@@ -23,6 +23,9 @@ interface PinMapProps {
   onSelectPin?: (pinX: number, pinY: number) => void;
   hotspots?: HotspotMarker[];
   hidePins?: boolean;
+  // mode === "place" 에서 클릭해 찍는 draft pin의 색을, 폼에서 선택 중인
+  // 긴급도에 맞춰 보여줄 때 씁니다.
+  draftUrgency?: ReportUrgency;
 }
 
 const PIN_BG_CLASSES = {
@@ -64,6 +67,7 @@ export function PinMap({
   onSelectPin,
   hotspots,
   hidePins,
+  draftUrgency,
 }: PinMapProps) {
   const showZonePicker = mode === "place";
 
@@ -121,7 +125,10 @@ export function PinMap({
           className="animate-tt-pin-drop pointer-events-none absolute -translate-x-1/2 -translate-y-1/2"
           style={{ left: `${draftPin.x}%`, top: `${draftPin.y}%` }}
         >
-          <Pin colorClassName="bg-primary-600" size={26} />
+          <Pin
+            colorClassName={draftUrgency ? PIN_BG_CLASSES[draftUrgency] : "bg-primary-600"}
+            size={26}
+          />
         </div>
       )}
 

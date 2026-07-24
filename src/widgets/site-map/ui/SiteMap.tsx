@@ -28,6 +28,9 @@ interface SiteMapProps {
   rightControls?: ReactNode;
   hotspots?: HotspotMarker[];
   hidePins?: boolean;
+  // mode === "place" 에서 클릭해 찍는 draft pin의 색을, 폼에서 선택 중인
+  // 긴급도에 맞춰 보여줄 때 씁니다.
+  draftUrgency?: ReportUrgency;
 }
 
 export function SiteMap({
@@ -38,6 +41,7 @@ export function SiteMap({
   rightControls,
   hotspots,
   hidePins,
+  draftUrgency,
 }: SiteMapProps) {
   const { data: buildings, isLoading, isError } = useLocationTree();
   const [selectedBuildingId, setSelectedBuildingId] = useState<string>("");
@@ -96,6 +100,7 @@ export function SiteMap({
           onSelectPin ? (pinX, pinY) => onSelectPin(building.id, floor.id, pinX, pinY) : undefined
         }
         hotspots={visibleHotspots}
+        draftUrgency={draftUrgency}
         hidePins={hidePins}
       />
 
