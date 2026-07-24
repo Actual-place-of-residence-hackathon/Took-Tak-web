@@ -40,22 +40,39 @@ function getOrCreateDeviceId(): string {
   return id;
 }
 
+// 페이지 진입 직후 여러 컴포넌트가 동시에 getAuthToken()을 호출하면
+// 캐시된 토큰이 없는 상태에서 /api/auth/login 이 중복으로 나갑니다.
+// 같은 studentId로 거의 동시에 두 번 요청하면 백엔드가 유저를 두 번
+// 생성하려다 두 번째 요청에서 409(이미 있음)를 내는 경쟁 상태가 생기므로,
+// 진행 중인 발급 요청을 하나로 묶어(in-flight promise 공유) 재사용합니다.
+let inFlightTokenRequest: Promise<string> | null = null;
+
 async function issueStudentToken(): Promise<string> {
-  const deviceId = getOrCreateDeviceId();
+  if (inFlightTokenRequest) return inFlightTokenRequest;
 
-  const res = await fetch("/api/auth/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ studentId: deviceId }),
-  });
+  inFlightTokenRequest = (async () => {
+    const deviceId = getOrCreateDeviceId();
 
-  if (!res.ok) {
-    throw new Error("학생 인증 토큰 발급에 실패했습니다.");
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ studentId: deviceId }),
+    });
+
+    if (!res.ok) {
+      throw new Error("학생 인증 토큰 발급에 실패했습니다.");
+    }
+
+    const body = (await res.json()) as { token: string };
+    window.localStorage.setItem(STUDENT_TOKEN_KEY, body.token);
+    return body.token;
+  })();
+
+  try {
+    return await inFlightTokenRequest;
+  } finally {
+    inFlightTokenRequest = null;
   }
-
-  const body = (await res.json()) as { token: string };
-  window.localStorage.setItem(STUDENT_TOKEN_KEY, body.token);
-  return body.token;
 }
 
 export function getAdminToken(): string | null {
