@@ -29,6 +29,7 @@ const PIN_BG_CLASSES = {
   high: "bg-red-600",
   medium: "bg-orange-500",
   low: "bg-yellow-400",
+  done: "bg-emerald-500",
   neutral: "bg-zinc-400",
 } as const;
 
@@ -143,7 +144,11 @@ export function PinMap({
               </span>
               <Pin
                 colorClassName={
-                  report.urgency ? PIN_BG_CLASSES[report.urgency] : PIN_BG_CLASSES.neutral
+                  report.status === "done"
+                    ? PIN_BG_CLASSES.done
+                    : report.urgency
+                      ? PIN_BG_CLASSES[report.urgency]
+                      : PIN_BG_CLASSES.neutral
                 }
               />
             </button>
