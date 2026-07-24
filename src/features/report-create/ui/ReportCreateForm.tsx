@@ -45,7 +45,7 @@ export function ReportCreateForm({
     defaultValues: {
       buildingId: initialLocation?.buildingId ?? "",
       floorId: initialLocation?.floorId ?? "",
-      zoneId: initialLocation?.zoneId ?? "",
+      zoneId: initialLocation?.zoneId ?? undefined,
       description: "",
     },
   });
@@ -53,7 +53,9 @@ export function ReportCreateForm({
   const buildingId = watch("buildingId");
   const floorId = watch("floorId");
   const zoneId = watch("zoneId");
-  const hasLocation = Boolean(zoneId);
+  const pinX = watch("pinX");
+  const pinY = watch("pinY");
+  const hasLocation = Boolean(zoneId) || (pinX !== undefined && pinY !== undefined);
 
   // 선택된 위치의 이름은 initialLocation(고정 prop)이 아니라 현재 폼 값으로부터
   // 매번 다시 구합니다 — 사용자가 아래 지도에서 다른 구역을 다시 고르면
@@ -67,6 +69,16 @@ export function ReportCreateForm({
     setValue("buildingId", buildingId);
     setValue("floorId", floorId);
     setValue("zoneId", selectedZoneId);
+    setValue("pinX", undefined);
+    setValue("pinY", undefined);
+  }
+
+  function handleSelectPin(buildingId: string, floorId: string, pinX: number, pinY: number) {
+    setValue("buildingId", buildingId);
+    setValue("floorId", floorId);
+    setValue("zoneId", undefined);
+    setValue("pinX", pinX);
+    setValue("pinY", pinY);
   }
 
   async function onSubmit(values: ReportCreateFormValues) {
@@ -76,6 +88,8 @@ export function ReportCreateForm({
       buildingId: values.buildingId,
       floorId: values.floorId,
       zoneId: values.zoneId,
+      pinX: values.pinX,
+      pinY: values.pinY,
       part: values.part,
       description: values.description,
       photoUrls: photos.map((p) => p.url),
@@ -97,14 +111,19 @@ export function ReportCreateForm({
           <p className="mt-2 text-zinc-600">
             {selectedBuilding?.name ?? initialLocation?.buildingName} ·{" "}
             {selectedFloor?.name ?? initialLocation?.floorName} ·{" "}
-            {selectedZone?.name ?? initialLocation?.zoneName}
+            {selectedZone?.name ?? initialLocation?.zoneName ?? "직접 선택한 위치"}
           </p>
         ) : (
-          <p className="mt-2 text-sm text-zinc-400">배치도에서 구역 핀을 눌러 선택해주세요.</p>
+          <p className="mt-2 text-sm text-zinc-400">배치도에서 신고 위치를 눌러 선택해주세요.</p>
         )}
         {errors.zoneId && <p className="mt-1 text-xs text-rose-500">{errors.zoneId.message}</p>}
         <div className="mt-4">
-          <SiteMap mode="place" onSelectZone={handleSelectZone} selectedZoneId={zoneId || null} />
+          <SiteMap
+            mode="place"
+            onSelectZone={handleSelectZone}
+            onSelectPin={handleSelectPin}
+            selectedZoneId={zoneId || null}
+          />
         </div>
       </Card>
 
