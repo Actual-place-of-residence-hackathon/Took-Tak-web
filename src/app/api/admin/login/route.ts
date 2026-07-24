@@ -26,10 +26,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ message }, { status: 502 });
   }
 
+  // Secure 쿠키는 HTTPS에서만 브라우저가 저장합니다. NODE_ENV==="production"으로
+  // 판단하면 배포 서버가 아직 HTTP인 지금 브라우저가 쿠키를 조용히 버려서
+  // 로그인은 성공해도 /admin/dashboard 진입 시 다시 로그인 화면으로 튕깁니다.
+  // 실제 요청 프로토콜을 보고 판단합니다(TLS 붙이면 자동으로 secure=true 전환).
+  const isHttps =
+    request.headers.get("x-forwarded-proto") === "https" || new URL(request.url).protocol === "https:";
+
   const cookieStore = await cookies();
   cookieStore.set(ADMIN_COOKIE_NAME, createAdminSessionToken(), {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: isHttps,
     sameSite: "lax",
     path: "/",
     maxAge: 60 * 60 * 24 * 7,
