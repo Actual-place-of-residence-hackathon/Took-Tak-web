@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import type { Report } from "@/shared/types/report";
-import { reportLocationLabel } from "@/shared/lib/report-location";
 import { floorImageSrc } from "@/shared/config/site-map";
 import type { SiteMapMode } from "../model/types";
 
@@ -137,15 +136,11 @@ export function PinMap({
                 e.stopPropagation();
                 onPinClick?.(report);
               }}
-              className="animate-tt-pin-drop group absolute -translate-x-1/2 -translate-y-1/2"
+              className="animate-tt-pin-drop group absolute -translate-x-1/2 -translate-y-1/2 hover:z-10"
               style={{ left: `${report.pinX}%`, top: `${report.pinY}%` }}
             >
-              <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 w-max max-w-56 -translate-x-1/2 rounded-lg bg-zinc-900 px-2.5 py-1.5 text-xs text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
-                <span className="block font-medium">{reportLocationLabel(report)}</span>
-                <span className="block text-zinc-300">
-                  {report.category ?? "분류 대기"} · 긴급도 {report.urgency ?? "-"}
-                </span>
-                <span className="block max-w-56 truncate text-zinc-300">{report.description}</span>
+              <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 w-max max-w-56 -translate-x-1/2 rounded-lg bg-zinc-900 px-2.5 py-1.5 text-xs whitespace-nowrap text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
+                {report.category ?? "분류 대기"}
               </span>
               <Pin
                 colorClassName={
