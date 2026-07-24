@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import type { Report } from "@/shared/types/report";
 import { reportLocationLabel } from "@/shared/lib/report-location";
 import { floorImageSrc } from "@/shared/config/site-map";
@@ -72,8 +73,48 @@ export function PinMap({
 }: PinMapProps) {
   const showZonePicker = mode === "place";
 
+  // 백엔드는 zone_id 만 저장할 수 있어(임의 좌표 컬럼 없음) 실제로 신고에
+  // 붙는 위치는 여전히 정해진 zone 중 하나입니다. 다만 사용자 입장에선 누른
+  // 그 자리에 핀이 딱 찍혀야 하니, 클릭 좌표에 핀을 그대로 그려주고(시각적)
+  // 그 좌표에서 가장 가까운 zone 을 내부적으로 선택합니다(실제 저장값).
+  const [draftPin, setDraftPin] = useState<{ x: number; y: number } | null>(null);
+
+  useEffect(() => {
+    setDraftPin(null);
+  }, [buildingName, floorName]);
+
+  function handleImageAreaClick(e: React.MouseEvent<HTMLDivElement>) {
+    if (!showZonePicker || !onSelectZone) return;
+
+    const withCoords = zones.filter(
+      (z): z is typeof z & { pinX: number; pinY: number } => z.pinX !== null && z.pinY !== null,
+    );
+    if (withCoords.length === 0) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+    let nearest = withCoords[0];
+    let nearestDistSq = Infinity;
+    for (const zone of withCoords) {
+      const dx = zone.pinX - x;
+      const dy = zone.pinY - y;
+      const distSq = dx * dx + dy * dy;
+      if (distSq < nearestDistSq) {
+        nearestDistSq = distSq;
+        nearest = zone;
+      }
+    }
+    setDraftPin({ x, y });
+    onSelectZone(nearest.id);
+  }
+
   return (
-    <div className="relative mx-auto w-full">
+    <div
+      className={`relative mx-auto w-full ${showZonePicker ? "cursor-crosshair" : ""}`}
+      onClick={handleImageAreaClick}
+    >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={floorImageSrc(buildingName, floorName)}
@@ -103,6 +144,7 @@ export function PinMap({
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
+                  setDraftPin({ x: zone.pinX as number, y: zone.pinY as number });
                   onSelectZone?.(zone.id);
                 }}
                 className="animate-tt-pin-drop group absolute -translate-x-1/2 -translate-y-1/2"
@@ -111,13 +153,22 @@ export function PinMap({
                 <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 w-max -translate-x-1/2 rounded-lg bg-zinc-900 px-2.5 py-1.5 text-xs whitespace-nowrap text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
                   {zone.name}
                 </span>
-                <Pin
-                  colorClassName={selected ? "bg-primary-600" : "bg-zinc-400"}
-                  size={selected ? 24 : 18}
-                />
+                <Pin colorClassName={selected ? "bg-primary-600" : "bg-zinc-400"} size={14} />
               </button>
             );
           })}
+
+      {/* 사용자가 실제로 누른 위치에 그대로 찍히는 핀. 저장되는 값은 위에서
+          내부적으로 고른 가장 가까운 zone 이지만, 시각적으로는 클릭한 자리에
+          핀이 나와야 하니 그 좌표를 그대로 씁니다. */}
+      {showZonePicker && draftPin && (
+        <div
+          className="animate-tt-pin-drop pointer-events-none absolute -translate-x-1/2 -translate-y-1/2"
+          style={{ left: `${draftPin.x}%`, top: `${draftPin.y}%` }}
+        >
+          <Pin colorClassName="bg-primary-600" size={26} />
+        </div>
+      )}
 
       {!showZonePicker &&
         !hidePins &&
