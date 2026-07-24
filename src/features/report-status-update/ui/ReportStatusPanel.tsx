@@ -33,7 +33,13 @@ const STATUS_DROPDOWN_OPTIONS = STATUS_OPTIONS.map((s) => ({
   label: REPORT_STATUS_LABELS[s],
 }));
 
-export function ReportStatusPanel({ report }: { report: Report }) {
+export function ReportStatusPanel({
+  report,
+  onStatusChanged,
+}: {
+  report: Report;
+  onStatusChanged?: () => void;
+}) {
   const overrideClassification = useOverrideClassification();
   const updateStatus = useUpdateReportStatus();
   const submitAction = useSubmitAction();
@@ -175,10 +181,12 @@ export function ReportStatusPanel({ report }: { report: Report }) {
               }
               submitAction.mutate({ id: report.id, content: actionContent });
               toast.success("완료 처리되었습니다.");
+              onStatusChanged?.();
               return;
             }
             updateStatus.mutate({ id: report.id, status: nextStatus, note: note || undefined });
             toast.success("상태를 변경했습니다.");
+            onStatusChanged?.();
           }}
         >
           상태 변경 적용

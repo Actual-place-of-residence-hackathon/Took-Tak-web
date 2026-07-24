@@ -44,7 +44,9 @@ export function ReportManagementPage() {
       )}
 
       <Sheet open={Boolean(selected)} onClose={() => setSelected(null)} title="신고 상세">
-        {selected && <ReportStatusPanel report={selected} />}
+        {selected && (
+          <ReportStatusPanel report={selected} onStatusChanged={() => setSelected(null)} />
+        )}
       </Sheet>
     </main>
   );

@@ -91,7 +91,12 @@ export function AdminDashboard() {
         onClose={() => setSelectedReportId(null)}
         title="신고 상세"
       >
-        {selectedReport && <ReportStatusPanel report={selectedReport} />}
+        {selectedReport && (
+          <ReportStatusPanel
+            report={selectedReport}
+            onStatusChanged={() => setSelectedReportId(null)}
+          />
+        )}
       </Sheet>
     </div>
   );
