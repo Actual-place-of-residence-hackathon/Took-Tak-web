@@ -68,7 +68,6 @@ export function StatisticsPage() {
 
     for (const report of reports) {
       if (report.pinX === null || report.pinY === null) continue;
-      if (report.zoneId === null) continue;
       const current = zoneMap.get(report.zoneId) ?? {
         buildingId: report.buildingId,
         floorId: report.floorId,
