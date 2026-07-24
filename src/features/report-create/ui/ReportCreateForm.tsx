@@ -16,10 +16,12 @@ import { PhotoUploader } from "./PhotoUploader";
 interface InitialLocation {
   buildingId: string;
   floorId: string;
-  zoneId: string;
   buildingName: string;
   floorName: string;
-  zoneName: string;
+  zoneId?: string;
+  zoneName?: string;
+  pinX?: number;
+  pinY?: number;
 }
 
 export function ReportCreateForm({
@@ -46,6 +48,8 @@ export function ReportCreateForm({
       buildingId: initialLocation?.buildingId ?? "",
       floorId: initialLocation?.floorId ?? "",
       zoneId: initialLocation?.zoneId ?? undefined,
+      pinX: initialLocation?.pinX ?? undefined,
+      pinY: initialLocation?.pinY ?? undefined,
       description: "",
     },
   });

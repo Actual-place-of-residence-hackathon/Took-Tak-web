@@ -8,10 +8,12 @@ import type { ReportUrgency } from "@/shared/types/report";
 import { Sheet } from "@/shared/ui";
 import { ReportCreateForm } from "@/features/report-create";
 
-interface PendingZone {
+interface PendingLocation {
   buildingId: string;
   floorId: string;
-  zoneId: string;
+  zoneId?: string;
+  pinX?: number;
+  pinY?: number;
 }
 
 type UrgencyOption = ReportUrgency | "전체";
@@ -54,30 +56,36 @@ function UrgencyFilter({
 export function HomePage() {
   const router = useRouter();
   const { data: buildings } = useLocationTree();
-  const [pendingZone, setPendingZone] = useState<PendingZone | null>(null);
+  const [pendingLocation, setPendingLocation] = useState<PendingLocation | null>(null);
   const [urgency, setUrgency] = useState<UrgencyOption>("전체");
 
   function handleSelectZone(buildingId: string, floorId: string, zoneId: string) {
-    setPendingZone({ buildingId, floorId, zoneId });
+    setPendingLocation({ buildingId, floorId, zoneId });
+  }
+
+  function handleSelectPin(buildingId: string, floorId: string, pinX: number, pinY: number) {
+    setPendingLocation({ buildingId, floorId, pinX, pinY });
   }
 
   function handleSuccess() {
-    setPendingZone(null);
+    setPendingLocation(null);
   }
 
-  const building = buildings?.find((b) => b.id === pendingZone?.buildingId);
-  const floor = building?.floors.find((f) => f.id === pendingZone?.floorId);
-  const zone = floor?.zones.find((z) => z.id === pendingZone?.zoneId);
+  const building = buildings?.find((b) => b.id === pendingLocation?.buildingId);
+  const floor = building?.floors.find((f) => f.id === pendingLocation?.floorId);
+  const zone = floor?.zones.find((z) => z.id === pendingLocation?.zoneId);
 
   const initialLocation =
-    pendingZone && building && floor && zone
+    pendingLocation && building && floor && (zone || pendingLocation.pinX !== undefined)
       ? {
           buildingId: building.id,
           floorId: floor.id,
-          zoneId: zone.id,
           buildingName: building.name,
           floorName: floor.name,
-          zoneName: zone.name,
+          zoneId: zone?.id,
+          zoneName: zone?.name,
+          pinX: pendingLocation.pinX,
+          pinY: pendingLocation.pinY,
         }
       : undefined;
 
@@ -88,20 +96,25 @@ export function HomePage() {
           배치도를 눌러 신고 위치를 선택해주세요
         </h1>
         <p className="text-sm text-zinc-500">
-          건물과 층을 고른 뒤, 배치도 위 구역 핀을 누르면 신고 작성 창이 열려요.
+          건물과 층을 고른 뒤, 배치도 위 원하는 위치를 누르면 핀이 찍히고 신고 작성 창이 열려요.
         </p>
       </div>
 
       <SiteMap
         mode="place"
         onSelectZone={handleSelectZone}
-        selectedZoneId={pendingZone?.zoneId ?? null}
+        onSelectPin={handleSelectPin}
+        selectedZoneId={pendingLocation?.zoneId ?? null}
         onPinClick={(report) => router.push(`/report/${report.id}`)}
         urgencyFilter={urgency === "전체" ? undefined : urgency}
         rightControls={<UrgencyFilter value={urgency} onChange={setUrgency} />}
       />
 
-      <Sheet open={Boolean(pendingZone)} onClose={() => setPendingZone(null)} title="신고 작성">
+      <Sheet
+        open={Boolean(pendingLocation)}
+        onClose={() => setPendingLocation(null)}
+        title="신고 작성"
+      >
         {initialLocation && (
           <ReportCreateForm initialLocation={initialLocation} onSuccess={handleSuccess} />
         )}
