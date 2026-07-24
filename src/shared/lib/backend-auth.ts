@@ -17,11 +17,25 @@ function isBrowser(): boolean {
   return typeof window !== "undefined";
 }
 
+// crypto.randomUUID()는 secure context(HTTPS/localhost)에서만 쓸 수 있습니다.
+// 배포 서버가 아직 HTTP라서 그냥 쓰면 여기서 예외가 나 로그인 자체가
+// 시도되지 않습니다(네트워크 탭에 요청조차 안 찍히는 원인) — 대체 구현 사용.
+function generateDeviceId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 function getOrCreateDeviceId(): string {
   const existing = window.localStorage.getItem(DEVICE_ID_KEY);
   if (existing) return existing;
 
-  const id = crypto.randomUUID();
+  const id = generateDeviceId();
   window.localStorage.setItem(DEVICE_ID_KEY, id);
   return id;
 }
