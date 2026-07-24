@@ -49,11 +49,7 @@ export function ReportStatusPanel({
   // (C2/A4 도 zone_id 단위로 중복을 판정합니다)
   const { data: allReports = [] } = useReports();
   const similarReports = allReports.filter(
-    (r) =>
-      report.zoneId !== null &&
-      r.zoneId === report.zoneId &&
-      r.id !== report.id &&
-      r.status !== "done",
+    (r) => r.zoneId === report.zoneId && r.id !== report.id && r.status !== "done",
   );
 
   const [category, setCategory] = useState<ReportCategory>(report.category ?? "기타");
